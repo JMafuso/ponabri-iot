@@ -4,10 +4,10 @@
 
 | Requisito Técnico                          | Atendido? | Justificativa / Evidência                                                                                   |
 |-------------------------------------------|-----------|-------------------------------------------------------------------------------------------------------------|
-| Sistema IoT com 3+ dispositivos            | Sim       | ESP32 (Wokwi), Node-RED (gateway), API .NET no Azure (serviço backend)                                      |
-| Hardware ESP32/Wokwi                        | Sim       | Código-fonte para ESP32 com uso de LEDs e Wi-Fi no Wokwi                                                    |
+| Sistema IoT com 3+ dispositivos            | Sim       | ESP32, entrada Serial simulada, LEDs atuadores; Node-RED como gateway; API .NET no Azure                     |
+| Hardware ESP32/Wokwi                        | Sim       | Código-fonte para ESP32 com uso de LEDs e Wi-Fi no ambiente Wokwi                                           |
 | Dashboard                                  | Sim       | Node-RED com nós de debug e monitoramento via painel                                                        |
-| Gateway Node-RED                           | Sim       | Fluxo Node-RED que atua como gateway MQTT e faz chamadas HTTP para API .NET                                 |
+| Gateway Node-RED                           | Sim       | Fluxo Node-RED atuando como gateway MQTT e fazendo chamadas HTTP para API .NET                              |
 | Protocolos MQTT e HTTP JSON com tópicos únicos | Sim       | MQTT com tópicos `ponabri/checkin/request` e `ponabri/checkin/response`; HTTP GET para API .NET com JSON     |
 
 ---
@@ -25,9 +25,13 @@ Este sistema integra-se ao projeto Ponabri como uma solução IoT disruptiva, ut
 - **ESP32:** Microcontrolador responsável por capturar o código de reserva via Serial (simulação) e comunicar-se via MQTT.
 - **LEDs (Verde e Vermelho):** Indicadores visuais que sinalizam se a reserva é válida (LED verde) ou inválida (LED vermelho).
 
-> **Sugestão de imagens:**  
-> - Aqui, adicione um print do circuito no Wokwi mostrando o ESP32 e os LEDs conectados.  
-> - Aqui, adicione um print do fluxo principal do Node-RED com os nós MQTT, Function e HTTP Request.
+### Imagens Ilustrativas
+
+- **Print do circuito montado no Wokwi, mostrando o ESP32, os LEDs Verde e Vermelho, os resistores e as conexões na protoboard.**  
+  ![alt text](image.png)
+
+- **Print do fluxo principal no Node-RED, evidenciando a sequência de nós: MQTT in, as funções de preparação e processamento, o nó HTTP Request para a API, e o nó MQTT out, incluindo os nós de debug.**  
+  ![alt text](image-1.png)
 
 ---
 
@@ -105,7 +109,7 @@ https://ponabriapiapp-ggdbf5fagphpfzc8.brazilsouth-01.azurewebsites.net
 
 ---
 
-## 5. Apresentação Clara do Código-Fonte
+## 5. Apresentação Clara do Código-Fonte (Wokwi/ESP32)
 
 - **ponabri_config.h:**  
   Define os pinos dos LEDs e declara a função global `piscarLed`.
@@ -145,3 +149,5 @@ O sistema IoT Ponabri integra os seguintes componentes:
 
 5. **ESP32:**  
    Recebe a resposta MQTT e acende o LED verde ou vermelho conforme o resultado da validação.
+
+---

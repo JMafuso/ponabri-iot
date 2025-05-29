@@ -1,0 +1,213 @@
+[
+    {
+        "id": "e2c3d72b128961ce",
+        "type": "tab",
+        "label": "Fluxo 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "0fdb3f2440d9ce70",
+        "type": "mqtt-broker",
+        "name": "mosquitto",
+        "broker": "test.mosquitto.org",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "c32f1264b1cd7ded",
+        "type": "mqtt in",
+        "z": "e2c3d72b128961ce",
+        "name": "Recebe de ESP32",
+        "topic": "ponabri/checkin/request",
+        "qos": "2",
+        "datatype": "utf8",
+        "broker": "0fdb3f2440d9ce70",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 90,
+        "y": 160,
+        "wires": [
+            [
+                "6de53f8e8b3afec6",
+                "923db702db0005d7"
+            ]
+        ]
+    },
+    {
+        "id": "f64a797b5d87243c",
+        "type": "mqtt out",
+        "z": "e2c3d72b128961ce",
+        "name": "Envia para o ESP32",
+        "topic": "ponabri/checkin/response",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "0fdb3f2440d9ce70",
+        "x": 1120,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "6de53f8e8b3afec6",
+        "type": "debug",
+        "z": "e2c3d72b128961ce",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 320,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "7d5b57861cfd378d",
+        "type": "debug",
+        "z": "e2c3d72b128961ce",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 560,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "923db702db0005d7",
+        "type": "function",
+        "z": "e2c3d72b128961ce",
+        "name": "Prepara Chamada API",
+        "func": "// Pega o código da reserva vindo do payload do MQTT\nvar codigoReserva = msg.payload;\n\n// Url\nvar baseUrlApi = \"https://ponabriapiapp-ggdbf5fagphpfzc8.brazilsouth-01.azurewebsites.net\"; \n\nmsg.url = baseUrlApi + \"/api/Reservas/VALIDACAO/\" + codigoReserva;\n\n// Limpa o payload, pois a requisição GET não precisa de corpo\nmsg.payload = null; \n\nnode.log(\"Chamando API em: \" + msg.url);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 160,
+        "wires": [
+            [
+                "7d5b57861cfd378d",
+                "e2ec7247c3db635b"
+            ]
+        ]
+    },
+    {
+        "id": "e2ec7247c3db635b",
+        "type": "http request",
+        "z": "e2c3d72b128961ce",
+        "name": "Chama API Ponabri no Azure",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 580,
+        "y": 160,
+        "wires": [
+            [
+                "f9e3ec5ebed287db",
+                "9b58e85ecaf95f79"
+            ]
+        ]
+    },
+    {
+        "id": "9b58e85ecaf95f79",
+        "type": "function",
+        "z": "e2c3d72b128961ce",
+        "name": "Processa Resposta da API",
+        "func": "// msg.payload aqui é o objeto JSON retornado pela sua API no Azure\n// Ex: { \"status\": \"valido\", \"usuarioId\": 1, \"abrigoId\": 5 } ou {\"status\": \"invalido\", \"mensagem\": \"...\"}\nvar respostaDaAPI = msg.payload;\n\nnode.log(\"Resposta da API Ponabri recebida: \");\nnode.log(respostaDaAPI); \n\nif (respostaDaAPI && typeof respostaDaAPI.status === 'string') {\n    // Pega apenas o valor do campo 'status' para enviar ao ESP32\n    msg.payload = respostaDaAPI.status.toLowerCase();\n} else {\n    node.error(\"Resposta da API inesperada ou sem o campo 'status'. Detalhes:\", msg);\n    msg.payload = \"erro_api\"; // Envia um erro genérico para o ESP32\n}\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 160,
+        "wires": [
+            [
+                "522a1cf80b640ab8",
+                "f64a797b5d87243c"
+            ]
+        ]
+    },
+    {
+        "id": "f9e3ec5ebed287db",
+        "type": "debug",
+        "z": "e2c3d72b128961ce",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "522a1cf80b640ab8",
+        "type": "debug",
+        "z": "e2c3d72b128961ce",
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1120,
+        "y": 80,
+        "wires": []
+    }
+]
